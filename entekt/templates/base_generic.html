@@ -1,0 +1,14 @@
+
+{% extends 'index.html'%}
+
+{% block title %} Все предметы {% endblock %}
+
+{% block content %}
+    <h1>Список всех предметов</h1>
+    <ul>
+        {% for subject in subjects %}
+            <li><a href="{% url 'course_list' subject.id %}">{{ subject.title }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+

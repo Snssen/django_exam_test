@@ -1,0 +1,136 @@
+{% extends 'index.html' %}
+
+{% block title %} Quest View {% endblock %}
+
+{% block content %}
+    <div class="container mt-5 pt-5">
+        <h1>{{ module }}</h1>
+
+        {% for quest in quests_page %}
+            <form class="question-form" action="" method="post" data-question-id="{{ quest.qno }}">
+                {% csrf_token %}
+                <p>{{ quest.qno }}. {{ quest.question }}</p>
+
+                {% for option in quest.options.all %}
+                    <input class="form-check-input" type="checkbox" name="option_{{ quest.qno }}" value="{{ option.option }}" id="option_{{ quest.id }}_{{ option.option_letter }}">
+                    <label for="option_{{ quest.id }}_{{ option.option_letter }}">{{ option.option_letter }}. {{ option.option }}</label><br>
+                {% endfor %}
+
+                <br>
+                <input type="hidden" name="correct-answer-{{ quest.id }}" value="{% for correct_answer in quest.correct_answers.all %}{{ correct_answer.correct_option.option_letter }}:{{ correct_answer.correct_option.option }},{% endfor %}">
+
+                <br>
+                <input class="btn btn-primary check-btn" type="submit" value="Check"/>
+            </form>
+            <div class="container" id="result_div"></div>
+        {% endfor %}
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if quests_page.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ quests_page.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ quests_page.number }} of {{ quests_page.paginator.num_pages }}.
+                </span>
+
+                {% if quests_page.has_next %}
+                    <a href="?page={{ quests_page.next_page_number }}">next</a>
+                    <a href="?page={{ quests_page.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+
+        <div id="scoreDisplay">
+            Score: <span id="score">0</span>
+        </div>
+    </div>
+
+    <button onclick="massage()">Click me!</button>
+    <div class="container">
+        <li>
+            <input type="button" class="btn btn-danger" id="finish-btn" value="Finish">
+        </li>
+        <p type="button" class="btn btn-success show-result-btn ml-auto" id="show-result-btn">Show Results</p>
+    </div>
+    <button id="myBtn">Try</button>
+    <div class="container">
+        <button id="btn2">Submit</button>
+    </div>
+
+    <script>
+    const timer = document.getElementById('displaytimer');
+    const inputtag = document.getElementById('timer');
+
+    let t = 0;
+    setInterval(() => {
+        t += 1;
+        timer.innerHTML = "<b>Timer: " + t + " seconds</b>";
+        inputtag.innerText = t;
+    }, 1000);
+
+    function massage() {
+        alert('You clicked the button');
+    }
+
+    const bot = document.getElementById('myBtn');
+    bot.addEventListener("click", function() {
+        alert("You clicked");
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const checkButtons = document.querySelectorAll('.check-btn');
+    let answersData = [];
+
+    checkButtons.forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            const currentForm = event.target.closest('form');
+
+            if (currentForm) {
+                const questionId = currentForm.getAttribute('data-question-id');
+                const selectedOptions = currentForm.querySelectorAll(`input[name="option_${questionId}"]:checked`);
+
+                const userAnswers = [...selectedOptions].map(option => {
+                    const optionLetter = option.nextElementSibling.textContent.split('. ')[0];
+                    return `${optionLetter}:${option.value}`;
+                }).join(',');
+
+                const correctAnswer = currentForm.querySelector(`input[name="correct-answer-${questionId}"]`).value;
+
+                const matchingTerms = userAnswers.split(',').filter(userAnswer => {
+                    const [userOptionLetter, userOptionValue] = userAnswer.split(':');
+                    const correctOptionValue = correctAnswer
+                        .split(',')
+                        .find(option => option.startsWith(`${userOptionLetter}:`))
+                        ?.split(':')[1];
+
+                    return userOptionValue === correctOptionValue;
+                }).length;
+
+                const questionData = {
+                    questionId: questionId,
+                    correctAnswer: correctAnswer,
+                    userAnswer: userAnswers,
+                    matchingTerms: matchingTerms,
+                    score: matchingTerms
+                };
+
+                const existingIndex = answersData.findIndex(data => data.questionId === questionId);
+
+                if (existingIndex !== -1) {
+                    answersData[existingIndex] = questionData;
+                } else {
+                    answersData.push(questionData);
+                }
+
+                console.log(`Question ${questionId} - Stored Data:`, answersData);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

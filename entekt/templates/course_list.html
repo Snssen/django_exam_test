@@ -1,0 +1,60 @@
+{% extends 'index.html'%}
+
+{% block content %}
+    {% for course in courses %}
+        <li>
+            <a href="#" class="course-link">{{ course.title }}</a>
+            <div class="popup-menu">
+                {% for module in course.modules.all %}
+                    <a href="{% url 'module_detail' pk=module.pk %}">{{ module.title }}</a>
+                {% endfor %}
+            </div>
+        </li>
+    {% endfor %}
+
+    <hr>
+
+    <h1>Course Detail</h1>
+
+    {% if course %}
+        <h2>{{ course.title }}</h2>
+        <h3>Modules</h3>
+        <ul>
+            {% for module in modules %}
+                <li><a href="{% url 'module_detail' module.pk module.id %}">{{ module.title }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No course selected.</p>
+    {% endif %}
+
+    <script>
+        // JavaScript code for handling the pop-up menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const courseLinks = document.querySelectorAll('.course-link');
+            courseLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    this.nextElementSibling.classList.toggle('show');
+                });
+            });
+        });
+    </script>
+
+    <style>
+        /* CSS styles for the pop-up menu */
+        .popup-menu {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            z-index: 1;
+        }
+
+        .show {
+            display: block;
+        }
+    </style>
+{% endblock %}
